@@ -1,5 +1,5 @@
 
-type tx is record
+type transaction is record
     token_id : nat;
     amount : nat;
 end;
@@ -7,8 +7,8 @@ end;
 type transfer_param is record
     from_ : address;
     to_ : address;
-    batch : list(tx);
-    data : bytes;
+    batch : list(transaction);
+    // data : bytes;
 end;
 
 type balance_request is record
@@ -47,8 +47,8 @@ type action is
 
 | Balance_of of balance_of_param
 
-| Add_operator of modify_operator_param
+// | Add_operator of modify_operator_param
 
-| Remove_operator of modify_operator_param
+// | Remove_operator of modify_operator_param
 
-| Is_operator of is_operator_param
+// | Is_operator of is_operator_param
