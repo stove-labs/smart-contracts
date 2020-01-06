@@ -39,19 +39,22 @@ contract('multi_asset', accounts => {
         assert(newBalanceTo.isEqualTo(1));
     });
 
-    // it('should fail when you attempt to transfer a non existing asset', async () => {
-    //     expect(async () => {
-    //         await multi_asset_instance.transfer(
-    //             // transactions
-    //             [{
-    //                 token_id: "non-existing-asset-id",
-    //                 amount: 1
-    //             }],
-    //             // from
-    //             originatedBy,
-    //             // to
-    //             secondAddress
-    //         );
-    //     }).to.throw();
-    // });
+    it('should fail when you attempt to transfer a non existing asset', async () => {
+        try {
+            await rejects(multi_asset_instance.transfer(
+                // transactions
+                [{
+                    token_id: "1234",
+                    amount: 1
+                }],
+                // from
+                originatedBy,
+                // to
+                secondAddress
+            ))
+        } catch (err) {
+            // So far the error is {} without the specific error code from the contract
+            expect(err).to.be.an('Error');
+        }
+    });
 });
