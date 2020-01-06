@@ -1,5 +1,5 @@
 const multi_asset = artifacts.require('multi_asset');
-const { initial_storage, asset_id, originatedBy } = require('./../migrations/1_deploy_multi_asset.js');
+const { initial_storage, asset_id, originatedBy } = require('../migrations/1_deploy_multi_asset.js');
 const secondAddress = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 contract('multi_asset', accounts => {
@@ -38,4 +38,20 @@ contract('multi_asset', accounts => {
         assert(newBalanceFrom.isEqualTo(oldBalanceFrom.minus(1)));
         assert(newBalanceTo.isEqualTo(1));
     });
+
+    // it('should fail when you attempt to transfer a non existing asset', async () => {
+    //     expect(async () => {
+    //         await multi_asset_instance.transfer(
+    //             // transactions
+    //             [{
+    //                 token_id: "non-existing-asset-id",
+    //                 amount: 1
+    //             }],
+    //             // from
+    //             originatedBy,
+    //             // to
+    //             secondAddress
+    //         );
+    //     }).to.throw();
+    // });
 });

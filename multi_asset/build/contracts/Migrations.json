@@ -3,12 +3,12 @@
   "abi": [],
   "code": "[ { \"prim\": \"parameter\", \"args\": [ { \"prim\": \"int\" } ] },\n  { \"prim\": \"storage\",\n    \"args\":\n      [ { \"prim\": \"pair\",\n          \"args\":\n            [ { \"prim\": \"int\", \"annots\": [ \"%last_completed_migration\" ] },\n              { \"prim\": \"address\", \"annots\": [ \"%owner\" ] } ] } ] },\n  { \"prim\": \"code\",\n    \"args\":\n      [ [ { \"prim\": \"DUP\" }, { \"prim\": \"CDR\" }, { \"prim\": \"DUP\" },\n          { \"prim\": \"CDR\" }, { \"prim\": \"SENDER\" }, { \"prim\": \"COMPARE\" },\n          { \"prim\": \"NEQ\" },\n          { \"prim\": \"IF\",\n            \"args\":\n              [ [ { \"prim\": \"PUSH\",\n                    \"args\": [ { \"prim\": \"unit\" }, { \"prim\": \"Unit\" } ] } ],\n                [ { \"prim\": \"DIP\", \"args\": [ [ { \"prim\": \"DUP\" } ] ] },\n                  { \"prim\": \"SWAP\" }, { \"prim\": \"CAR\" },\n                  { \"prim\": \"DIP\",\n                    \"args\": [ [ { \"prim\": \"DUP\" }, { \"prim\": \"CDR\" } ] ] },\n                  { \"prim\": \"PAIR\" },\n                  { \"prim\": \"DIP\", \"args\": [ [ { \"prim\": \"DROP\" } ] ] },\n                  { \"prim\": \"PUSH\",\n                    \"args\": [ { \"prim\": \"unit\" }, { \"prim\": \"Unit\" } ] } ] ] },\n          { \"prim\": \"DROP\" }, { \"prim\": \"DUP\" },\n          { \"prim\": \"NIL\", \"args\": [ { \"prim\": \"operation\" } ] },\n          { \"prim\": \"PAIR\" },\n          { \"prim\": \"DIP\",\n            \"args\": [ [ { \"prim\": \"DROP\", \"args\": [ { \"int\": \"2\" } ] } ] ] } ] ] } ]",
   "source": "type migrations is record\n  owner : address;\n  last_completed_migration : int;\nend\n\nfunction main (const completed_migration: int ; var migrations : migrations) : (list(operation) * migrations) is\n  block {\n    if sender =/= migrations.owner\n    then\n      skip\n    else\n      migrations.last_completed_migration := completed_migration;\n  } with ((nil : list(operation)), migrations);\n",
-  "sourcePath": "/Users/matejsima/Projects/stove-labs/smart-contracts/multi_asset_truffle/contracts/main/Migrations.ligo",
+  "sourcePath": "/Users/matejsima/Projects/stove-labs/smart-contracts/multi_asset/contracts/main/Migrations.ligo",
   "compiler": {
     "name": "ligo",
     "version": "next"
   },
   "networks": {},
   "schemaVersion": "3.1.4-alphaTez.0",
-  "updatedAt": "2020-01-06T21:27:03.257Z"
+  "updatedAt": "2020-01-06T21:47:30.122Z"
 }
