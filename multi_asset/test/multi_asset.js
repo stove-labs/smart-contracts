@@ -7,6 +7,7 @@ contract('multi_asset', accounts => {
     let multi_asset_instance;
     beforeEach(async () => {
         multi_asset_instance = await multi_asset.deployed();
+
         console.log('Contract address:', multi_asset_instance.address);
         storage = await multi_asset_instance.storage();
     });
@@ -41,7 +42,7 @@ contract('multi_asset', accounts => {
 
     it('should fail when you attempt to transfer a non existing asset', async () => {
         try {
-            await rejects(multi_asset_instance.transfer(
+            await multi_asset_instance.transfer(
                 // transactions
                 [{
                     token_id: "1234",
@@ -50,10 +51,14 @@ contract('multi_asset', accounts => {
                 // from
                 originatedBy,
                 // to
-                secondAddress
-            ))
+                secondAddress,
+                {
+                    gasLimit: 10600 * 5
+                }
+            )
         } catch (err) {
             // So far the error is {} without the specific error code from the contract
+            console.log('expected error:', err);
             expect(err).to.be.an('Error');
         }
     });
