@@ -1,13 +1,23 @@
 #include "./action.ligo"
 #include "./storage.ligo"
 #include "./error_codes.ligo"
+#include "./helpers/option.ligo"
+(* @TODO: preprocess/remove if not necessary *)
+#include "./multi_token_receiver.ligo"
 
+(*
+    Returns an asset_ledger or fails with the predefined error code
+*)
 function get_asset_ledger_or_fail(const asset_id : asset_id; const storage : storage) : asset_ledger
     is (case storage.assets[asset_id] of 
         | Some(asset_ledger) -> asset_ledger
         | None -> (failwith(asset_id_not_found) : asset_ledger)
     end)
 
+(*
+    Returns True only if the given asset_owner has a balance of asset_id that is greater or equal 
+    to the transaction_amount required to complete the given transaction_amount
+*)
 function address_has_sufficient_asset_balance(const asset_id : asset_id; const asset_owner : asset_owner; const transaction_amount : nat; const storage : storage) : bool
     is begin
         const asset_ledger : asset_ledger = get_asset_ledger_or_fail(asset_id, storage);
@@ -17,6 +27,9 @@ function address_has_sufficient_asset_balance(const asset_id : asset_id; const a
             | None -> False
         end)
 
+(* 
+    Throws a predefined error code in case the given asset_owner doesnt have sufficient balance to transfer the given asset_id 
+*)
 function fail_unless_address_has_sufficient_asset_balance(const asset_id : asset_id; const asset_owner : asset_owner; const transaction_amount : nat; const storage : storage) : unit
     is (case address_has_sufficient_asset_balance(asset_id, asset_owner, transaction_amount, storage) of 
         | True -> Unit
@@ -24,27 +37,47 @@ function fail_unless_address_has_sufficient_asset_balance(const asset_id : asset
     end)
 
 (* 
-    Transfer is only possible if you have sufficient asset balance.
-    In case of non fungible assets, having a positive balance counts as asset ownership.
-    
-    Dev note: please beware that for non fungible assets, a case where the asset_ledger 
-    has multiple asset_owners in the asset_ledger, can't happen.
+    Fails with a predefined error code unless the given from_ address has permission to transfer/handle the asset
+    Note: In the current implementation, you can only transfer/handle your own assets 
+*)
+function fail_unless_address_has_permission(const from_ : address) : unit
+    is if from_ =/= sender then failwith(transfer_permission_denied) else Unit
+
+(* 
+    Transfer is only possible if you have sufficient asset balance & have permission to transfer/handle the asset.
+    In case of non fungible assets, having a positive balance counts as asset ownership from the client perspective.
 *)
 function transfer (const transfer_param : transfer_param; var storage : storage) : (list(operation) * storage)
     is block {
+
+        var operations : list(operation) := list end;
+
         function transaction_iterator (const transaction : transaction) : unit 
             is block {
                 fail_unless_address_has_sufficient_asset_balance(transaction.token_id, transfer_param.from_, transaction.amount, storage);
-                
-                var asset_ledger : asset_ledger := get_force(transaction.token_id, storage.assets);
-                asset_ledger.balances[transfer_param.from_] := abs(get_force(transfer_param.from_, asset_ledger.balances) - transaction.amount);
-                asset_ledger.balances[transfer_param.to_] := case asset_ledger.balances[transfer_param.to_] of 
-                    | Some(asset_balance) -> asset_balance + transaction.amount
-                    | None -> transaction.amount
-                end;
+                fail_unless_address_has_permission(transfer_param.from_);
 
+                (* 
+                    Update balances in the asset_ledger for `from_` and `to_` addresses 
+                *)
+                var asset_ledger : asset_ledger := get_force(transaction.token_id, storage.assets);
+                const currentFromBalance : nat = get_force(transfer_param.from_, asset_ledger.balances);
+                (* abs() is used here because subtraction result is always int, 
+                however it will always be > 0 because we're subtracting two nats *)
+                asset_ledger.balances[transfer_param.from_] := abs(currentFromBalance - transaction.amount);
+
+                const currentToBalance : nat = get_with_default_nat(asset_ledger.balances[transfer_param.to_], 0n);
+                asset_ledger.balances[transfer_param.to_] := currentToBalance + transaction.amount;
+
+                (* Emit a token receiver operation if the to_ address is an originated account *)
+                (* @TODO: preprocess/remove if not necessary *)
+
+                (* 
+                    Update asset_ledger in the storage
+                *)
                 storage.assets[transaction.token_id] := asset_ledger;
             } with Unit;
 
+        (* Iterate trough and apply all the proposed transactions if they meet the contract requirements *)
         list_iter(transaction_iterator, transfer_param.batch);
-    } with ((nil : list(operation)), storage)
+    } with (operations, storage)
