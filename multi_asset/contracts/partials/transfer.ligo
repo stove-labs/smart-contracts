@@ -61,16 +61,13 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
                     Update balances in the asset_ledger for `from_` and `to_` addresses 
                 *)
                 var asset_ledger : asset_ledger := get_force(transaction.token_id, storage.assets);
-                const currentFromBalance : nat = get_force(transfer_param.from_, asset_ledger.balances);
+                const current_from_balance : nat = get_force(transfer_param.from_, asset_ledger.balances);
                 (* abs() is used here because subtraction result is always int, 
                 however it will always be > 0 because we're subtracting two nats *)
-                asset_ledger.balances[transfer_param.from_] := abs(currentFromBalance - transaction.amount);
+                asset_ledger.balances[transfer_param.from_] := abs(current_from_balance - transaction.amount);
 
-                const currentToBalance : nat = get_with_default_nat(asset_ledger.balances[transfer_param.to_], 0n);
-                asset_ledger.balances[transfer_param.to_] := currentToBalance + transaction.amount;
-
-                (* Emit a token receiver operation if the to_ address is an originated account *)
-                (* @TODO: preprocess/remove if not necessary *)
+                const current_to_balance : nat = get_with_default_nat(asset_ledger.balances[transfer_param.to_], 0n);
+                asset_ledger.balances[transfer_param.to_] := current_to_balance + transaction.amount;
 
                 (* 
                     Update asset_ledger in the storage
@@ -80,4 +77,31 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
 
         (* Iterate trough and apply all the proposed transactions if they meet the contract requirements *)
         list_iter(transaction_iterator, transfer_param.batch);
+
+        (* @TODO: add accounts whitelist, but make sure both whitelisting and token receiver features are optional*)
+        (* Emit a token receiver operation if the to_ address is an originated account *)
+        (* @TODO: preprocess/remove if not necessary *)
+        case (transfer_param.to_ = self_address) of
+            (* If the to_ address is the current contract, don't emit a token receiver operation *)
+            | True -> skip
+            | False -> begin
+                const token_receiver_contract_entrypoint : contract(on_multi_tokens_received_param) = get_entrypoint(on_multi_tokens_received_param_entrypoint, transfer_param.to_);
+                const token_receiver_operation_param : on_multi_tokens_received_param = record
+                    operator = sender;
+                    from_ = Some(transfer_param.from_);
+                    batch = transfer_param.batch;
+                    // data = transfer_param.data
+                end;
+
+                const token_receiver_operation : operation = transaction(
+                    token_receiver_operation_param,
+                    0mutez,
+                    token_receiver_contract_entrypoint
+                );
+
+                operations := token_receiver_operation # operations;
+                skip
+            end
+        end
+
     } with (operations, storage)
