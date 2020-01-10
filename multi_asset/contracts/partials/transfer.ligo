@@ -2,8 +2,9 @@
 #include "./storage.ligo"
 #include "./error_codes.ligo"
 #include "./helpers/option.ligo"
-(* @TODO: preprocess/remove if not necessary *)
+(* @TODO: preprocess/remove token receiver logic if not necessary *)
 #include "./multi_token_receiver.ligo"
+#include "./is_implicit.ligo"
 
 (*
     Returns an asset_ledger or fails with the predefined error code
@@ -52,56 +53,61 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
 
         var operations : list(operation) := list end;
 
-        function transaction_iterator (const transaction : transaction) : unit 
+        function transaction_iterator (const tx : tx) : unit 
             is block {
-                fail_unless_address_has_sufficient_asset_balance(transaction.token_id, transfer_param.from_, transaction.amount, storage);
+                fail_unless_address_has_sufficient_asset_balance(tx.token_id, transfer_param.from_, tx.amount, storage);
                 fail_unless_address_has_permission(transfer_param.from_);
 
                 (* 
                     Update balances in the asset_ledger for `from_` and `to_` addresses 
                 *)
-                var asset_ledger : asset_ledger := get_force(transaction.token_id, storage.assets);
+                var asset_ledger : asset_ledger := get_force(tx.token_id, storage.assets);
                 const current_from_balance : nat = get_force(transfer_param.from_, asset_ledger.balances);
                 (* abs() is used here because subtraction result is always int, 
                 however it will always be > 0 because we're subtracting two nats *)
-                asset_ledger.balances[transfer_param.from_] := abs(current_from_balance - transaction.amount);
+                asset_ledger.balances[transfer_param.from_] := abs(current_from_balance - tx.amount);
 
                 const current_to_balance : nat = get_with_default_nat(asset_ledger.balances[transfer_param.to_], 0n);
-                asset_ledger.balances[transfer_param.to_] := current_to_balance + transaction.amount;
+                asset_ledger.balances[transfer_param.to_] := current_to_balance + tx.amount;
 
                 (* 
                     Update asset_ledger in the storage
                 *)
-                storage.assets[transaction.token_id] := asset_ledger;
+                storage.assets[tx.token_id] := asset_ledger;
             } with Unit;
 
         (* Iterate trough and apply all the proposed transactions if they meet the contract requirements *)
         list_iter(transaction_iterator, transfer_param.batch);
 
-        (* @TODO: add accounts whitelist, but make sure both whitelisting and token receiver features are optional*)
-        (* Emit a token receiver operation if the to_ address is an originated account *)
-        (* @TODO: preprocess/remove if not necessary *)
-        case (transfer_param.to_ = self_address) of
-            (* If the to_ address is the current contract, don't emit a token receiver operation *)
-            | True -> skip
-            | False -> begin
-                const token_receiver_contract_entrypoint : contract(on_multi_tokens_received_param) = get_entrypoint(on_multi_tokens_received_param_entrypoint, transfer_param.to_);
-                const token_receiver_operation_param : on_multi_tokens_received_param = record
-                    operator = sender;
-                    from_ = Some(transfer_param.from_);
-                    batch = transfer_param.batch;
-                    // data = transfer_param.data
-                end;
+        (* Emit a token receiver operation if the to_ address is not an implicit account *)
+        (* @TODO: preprocess/remove token receiver logic if not necessary *)
+        (* 
+            This logic knowingly skips any whitelist implementation as outlined in the MAC specification.
+            All implicit accounts are automatically cleared for receiving assets in a transfer, while all originated
+            accounts are required to follow the on_multi_tokens_received entrypoint interface.
+        *)
+        if not is_implicit(sender) then begin
+            (* 
+                Note: MAC specification permits skipping the token_receiver_operation
+                if the target originated account is the current contract. 
+                However, this transfer implementation emits a token_receiver_operation for every originated account. 
+            *)
+            const token_receiver_contract_entrypoint : contract(on_multi_tokens_received_param) = get_entrypoint(on_multi_tokens_received_param_entrypoint, transfer_param.to_);
+            const token_receiver_operation_param : on_multi_tokens_received_param = record
+                operator = sender;
+                from_ = Some(transfer_param.from_);
+                batch = transfer_param.batch;
+                // data = transfer_param.data
+            end;
 
-                const token_receiver_operation : operation = transaction(
-                    token_receiver_operation_param,
-                    0mutez,
-                    token_receiver_contract_entrypoint
-                );
+            const token_receiver_operation : operation = transaction(
+                token_receiver_operation_param,
+                0mutez,
+                token_receiver_contract_entrypoint
+            );
 
-                operations := token_receiver_operation # operations;
-                skip
-            end
-        end
+            operations := token_receiver_operation # operations;
+            skip
+        end else skip;
 
     } with (operations, storage)

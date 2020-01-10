@@ -3,7 +3,7 @@
 type on_multi_tokens_received_param is record
     operator : address;
     from_ : option(address);
-    batch : list(transaction);
+    batch : list(tx);
     // data : bytes
 end;
 
