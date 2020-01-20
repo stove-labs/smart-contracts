@@ -1,0 +1,1 @@
+docker build -t stove-labs/image-babylonbox-run-archive -f ./scripts/sandbox/docker/Dockerfile ./scripts/sandbox/docker

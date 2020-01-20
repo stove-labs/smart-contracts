@@ -86,7 +86,7 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
             All implicit accounts are automatically cleared for receiving assets in a transfer, while all originated
             accounts are required to follow the on_multi_tokens_received entrypoint interface.
         *)
-        if not is_implicit(sender) then begin
+        if not is_implicit(transfer_param.to_) then begin
             (* 
                 Note: MAC specification permits skipping the token_receiver_operation
                 if the target originated account is the current contract. 

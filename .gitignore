@@ -1,2 +1,3 @@
 *.pp.ligo
 */**.pp.ligo
+**/node_modules/**

@@ -6,8 +6,17 @@ module.exports = {
   contracts_directory: "./contracts/main",
   networks: {
     development: {
+      host: "http://localhost",
+      port: 8732,
+      network_id: "*",
+      secret,
+      mnemonic,
+      passphrase,
+      email,
+      type: "tezos"
+    },
+    babylonnet: {
       host: "https://api.tez.ie/rpc/babylonnet",
-      port: 80,
       network_id: "*",
       secret,
       mnemonic,
