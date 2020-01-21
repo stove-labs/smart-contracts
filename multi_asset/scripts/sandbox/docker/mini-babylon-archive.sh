@@ -17,13 +17,16 @@ EOF
 
 export alice="$(flextesa key alice)"
 export bob="$(flextesa key bob)"
+
+export flextesa_node_cors_origin="*"
+
 all_commands="$all_commands
 * start : Start the sandbox."
 start () {
     flextesa mini-net \
              --root /tmp/mini-babylon --size 1 "$@" \
              --number-of-b 1 \
-             --time-b 8 \
+             --time-b 10 \
              --add-bootstrap-account="$alice@2_000_000_000_000" \
              --add-bootstrap-account="$bob@2_000_000_000_000" \
              --no-daemons-for=alice \
@@ -32,7 +35,7 @@ start () {
              --tezos-baker tezos-baker-005-PsBabyM1 \
              --tezos-endor tezos-endorser-005-PsBabyM1 \
              --tezos-accus tezos-accuser-005-PsBabyM1 \
-             --protocol-hash PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS
+             --protocol-hash PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS \
              --set-history-mode N000:archive
 }
 

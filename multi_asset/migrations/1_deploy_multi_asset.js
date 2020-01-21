@@ -1,11 +1,11 @@
-// @TODO: extract initial storage to a separate file
+//TODO: extract initial storage to a separate file
 const multi_asset = artifacts.require('multi_asset');
 const _ = require('lodash');
 const eztz = require('eztz.js').eztz;
-const InMemorySigner = require('@taquito/signer').InMemorySigner;
 const { unit } = require('./../helpers/constants');
 const { alice, bob } = require('./../scripts/sandbox/accounts');
 const generateAddress = require('./../helpers/generateAddress');
+const configureTaquitoInstance = require('./../helpers/configureTaquitoInstance');
 
 const asset_id = 123;
 const asset_balance = 10;
@@ -26,13 +26,7 @@ const initial_storage = {
 }
 
 module.exports = async (deployer, network, accounts) => {
-    /**
-     * Using a custom signer instead of `faucet.json` until truffle supports
-     * importing secret keys directly
-     */
-    const signer = new InMemorySigner(alice.sk)
-    this.tezos.setProvider({signer})
-
+    configureTaquitoInstance(this.tezos);
     await deployer.deploy(multi_asset, initial_storage, {
         gasLimit: 90000
     });

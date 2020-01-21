@@ -9,6 +9,7 @@
     "version": "next"
   },
   "networks": {},
-  "schemaVersion": "3.1.6-alphaTez.2",
-  "updatedAt": "2020-01-20T16:05:24.134Z"
+  "schemaVersion": "3.1.6-alphaTez.3",
+  "updatedAt": "2020-01-21T12:23:07.744Z",
+  "networkType": "tezos"
 }

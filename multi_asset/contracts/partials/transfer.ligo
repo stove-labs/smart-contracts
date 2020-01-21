@@ -2,18 +2,11 @@
 #include "./storage.ligo"
 #include "./error_codes.ligo"
 #include "./helpers/option.ligo"
-(* @TODO: preprocess/remove token receiver logic if not necessary *)
+//TODO: preprocess/remove token receiver logic if not necessary
 #include "./multi_token_receiver.ligo"
-#include "./is_implicit.ligo"
-
-(*
-    Returns an asset_ledger or fails with the predefined error code
-*)
-function get_asset_ledger_or_fail(const asset_id : asset_id; const storage : storage) : asset_ledger
-    is (case storage.assets[asset_id] of 
-        | Some(asset_ledger) -> asset_ledger
-        | None -> (failwith(asset_id_not_found) : asset_ledger)
-    end)
+#include "./helpers/is_implicit.ligo"
+#include "./helpers/get_asset_ledger_or_fail.ligo"
+#include "./helpers/default_balance.ligo"
 
 (*
     Returns True only if the given asset_owner has a balance of asset_id that is greater or equal 
@@ -62,12 +55,12 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
                     Update balances in the asset_ledger for `from_` and `to_` addresses 
                 *)
                 var asset_ledger : asset_ledger := get_force(tx.token_id, storage.assets);
-                const current_from_balance : nat = get_force(transfer_param.from_, asset_ledger.balances);
+                const current_from_balance : asset_balance = get_force(transfer_param.from_, asset_ledger.balances);
                 (* abs() is used here because subtraction result is always int, 
                 however it will always be > 0 because we're subtracting two nats *)
                 asset_ledger.balances[transfer_param.from_] := abs(current_from_balance - tx.amount);
 
-                const current_to_balance : nat = get_with_default_nat(asset_ledger.balances[transfer_param.to_], 0n);
+                const current_to_balance : asset_balance = get_with_default_nat(asset_ledger.balances[transfer_param.to_], default_balance);
                 asset_ledger.balances[transfer_param.to_] := current_to_balance + tx.amount;
 
                 (* 
@@ -80,7 +73,7 @@ function transfer (const transfer_param : transfer_param; var storage : storage)
         list_iter(transaction_iterator, transfer_param.batch);
 
         (* Emit a token receiver operation if the to_ address is not an implicit account *)
-        (* @TODO: preprocess/remove token receiver logic if not necessary *)
+        //TODO: preprocess/remove token receiver logic if not necessary
         (* 
             This logic knowingly skips any whitelist implementation as outlined in the MAC specification.
             All implicit accounts are automatically cleared for receiving assets in a transfer, while all originated

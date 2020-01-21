@@ -13,4 +13,4 @@ type multi_token_receiver_action is
 (* This entrypoint placeholder exists only to because if there's just one entrypoint (above), it won't compile as 'multi-entrypoint' which is a problem for our tests *)
 | Placeholder of unit
 
-const on_multi_tokens_received_param_entrypoint : string = "%on_multi_tokens_received_param"
+const on_multi_tokens_received_param_entrypoint : string = "%on_multi_tokens_received"

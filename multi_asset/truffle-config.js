@@ -1,5 +1,5 @@
 const { mnemonic, secret, password: passphrase, email } = require("./faucet.json");
-
+const { alice } = require('./scripts/sandbox/accounts');
 module.exports = {
   // see <http://truffleframework.com/docs/advanced/configuration>
   // for more details on how to specify configuration options!
@@ -9,10 +9,7 @@ module.exports = {
       host: "http://localhost",
       port: 8732,
       network_id: "*",
-      secret,
-      mnemonic,
-      passphrase,
-      email,
+      secretKey: alice.sk,
       type: "tezos"
     },
     babylonnet: {

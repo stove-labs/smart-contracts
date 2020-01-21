@@ -1,25 +1,5 @@
 #include "./transfer_param.ligo"
-
-type balance_request is record
-    owner : asset_owner;
-    token_id : asset_id;
-end;
-
-type balance_view_param is list((balance_request * asset_balance));
-
-type balance_view is contract(balance_view_param);
-
-type balance_of_param is record
-    balance_request : balance_request;
-    balance_view : balance_view;
-end;
-
-(* Only for temporary testing purposes *)
-type mint_param is record
-    addr : address;
-    token_id : asset_id;
-    amount : asset_balance
-end
+#include "./balance_of_param.ligo"
 
 // type modify_operator_param is address;
 
@@ -42,9 +22,6 @@ type action is
 | Transfer of transfer_param
 
 | Balance_of of balance_of_param
-
-(* Only for temporary testing purposes *)
-| Mint of mint_param
 
 // | Add_operator of modify_operator_param
 

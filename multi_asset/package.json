@@ -1,0 +1,27 @@
+{
+  "name": "multi_asset",
+  "version": "1.0.0",
+  "description": "",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "@taquito/taquito": "^6.0.0-beta.0",
+    "eztz": "^1.1.2",
+    "eztz.js": "^0.0.1",
+    "lodash": "^4.17.15"
+  },
+  "devDependencies": {
+    "promise-retry": "^1.1.1",
+    "truffle": "^5.2.4-alphaTez.3"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "wait-for-sandbox": "node ./scripts/sandbox/waitForNetwork.js",
+    "start-sandbox": "./scripts/sandbox/start_sandbox.sh && npm run wait-for-sandbox",
+    "kill-sandbox": "./scripts/sandbox/kill_sandbox.sh",
+    "restart-sandbox": "npm run kill-sandbox && npm run start-sandbox"
+  },
+  "author": "matej.sima@stove-labs.com",
+  "license": "MIT"
+}
